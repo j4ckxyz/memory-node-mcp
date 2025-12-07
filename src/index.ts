@@ -5,6 +5,7 @@ import {
     CallToolRequestSchema,
     ListToolsRequestSchema,
     ReadResourceRequestSchema,
+    ListResourcesRequestSchema,
     CallToolRequest,
     ReadResourceRequest,
     ErrorCode,

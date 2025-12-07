@@ -6,6 +6,9 @@ const API_BASE_URL = process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/a
 const SITE_URL = process.env.SITE_URL || "http://localhost";
 const SITE_NAME = process.env.SITE_NAME || "Memory Node";
 
+const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL || "text-embedding-3-small";
+const SUMMARY_MODEL = process.env.SUMMARY_MODEL || "openai/gpt-4o-mini";
+
 const client = new OpenAI({
     baseURL: API_BASE_URL,
     apiKey: OPENROUTER_API_KEY || "dummy-key", // Prevent crash if key missing, handled in calls
@@ -23,7 +26,7 @@ export async function generateEmbedding(text: string): Promise<number[] | null> 
 
     try {
         const response = await client.embeddings.create({
-            model: "text-embedding-3-small", // Standard OpenAI model, usually supported by OpenRouter proxies or direct OpenAI
+            model: EMBEDDING_MODEL,
             input: text,
         });
         return response.data[0].embedding;
@@ -43,7 +46,7 @@ export async function summarizeMemories(memories: string[]): Promise<string | nu
 
     try {
         const completion = await client.chat.completions.create({
-            model: "openai/gpt-4o-mini", // Cost-effective default on OpenRouter
+            model: SUMMARY_MODEL,
             messages: [
                 { role: "system", content: "You are a helpful assistant managing a long-term memory system. Summarize the following memory chunks into a single, dense paragraph. Preserve key facts, dates, and preferences. Discard redundant information." },
                 { role: "user", content: memories.join("\n\n---\n\n") }
