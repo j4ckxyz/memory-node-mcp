@@ -26,8 +26,9 @@ import { initScheduler, runMaintenance } from "./maintenance.js";
 import { generateEmbedding } from "./ai.js";
 
 // Initialize the database and scheduler
-initDb();
-initScheduler();
+// Moved to main() to ensure startup order
+// initDb();
+// initScheduler();
 
 const server = new Server(
     {
@@ -279,6 +280,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
 // Start Server
 async function main() {
     const transport = new StdioServerTransport();
+
+    // Initialize services
+    initDb();
+    initScheduler();
+
     await server.connect(transport);
 }
 
