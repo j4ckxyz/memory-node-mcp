@@ -19,10 +19,23 @@ Host this securely. Set environment variables in `.env` or Docker:
 
 ## Installation
 
-### Local
+### Quick Setup (Linux/macOS/Pi)
+```bash
+git clone https://github.com/jackgxyz/memory-node-mcp
+cd memory-node-mcp
+chmod +x setup.sh
+./setup.sh
+```
+This script will:
+1. create your `.env` file
+2. check for Tailscale
+3. install and build the project
+
+### Manual Installation
 1. `npm install`
 2. `npm run build`
-3. `node dist/index.js`
+3. `cp .env.example .env` (and edit it)
+4. `node dist/index.js`
 
 ### Docker
 ```bash
