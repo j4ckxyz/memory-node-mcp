@@ -19,9 +19,11 @@ import {
     searchMemories,
     deleteMemory,
     updateMemory,
-    getAllMemories
+    getAllMemories,
+    searchMemoriesByVector
 } from "./db.js";
 import { initScheduler, runMaintenance } from "./maintenance.js";
+import { generateEmbedding } from "./ai.js";
 
 // Initialize the database and scheduler
 initDb();
@@ -192,26 +194,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
 
     if (name === "search_memories") {
         const { query } = SearchSchema.parse(args);
+        let results: any[] = [];
 
-        // Try vector search first (requires OPENROUTER_API_KEY to generate query vector)
-        // For now, we'll do a simple fallback: if 'ai' module can generate it.
-        // But src/index.ts doesn't import 'ai.ts' directly, we used db helpers.
-        // Wait, we need to generate the vector for the query HERE to pass to searchMemoriesByVector.
-        // We need to import generateEmbedding here.
+        // Try vector search
+        const vector = await generateEmbedding(query);
+        if (vector) {
+            results = searchMemoriesByVector(vector);
+        }
 
-        // Let's stick to text search for now as the default tool, 
-        // OR import generateEmbedding from ./ai.js.
-        // I will do the latter in a follow-up replace_file_content or let's assume I add it now.
-        // Actually, let's keep it simple: Text search is robust. Vector search is an enhancement.
-        // I'll leave the original searchMemories (SQL LIKE) as the primary for reliability unless requested.
-        // But the user asked for it.
+        // If no vector results (or API failed), fall back to text search
+        if (results.length === 0) {
+            results = searchMemories(query);
+        }
 
-        // Let's try to dynamically import or just use text search if vector fails?
-        // No, I'll add a new tool or update this one.
-        // The prompt said "embedding model... run once every day...". 
-        // Real-time search might be slow if we call the API every time.
-
-        const results = searchMemories(query);
         return {
             content: [
                 {
