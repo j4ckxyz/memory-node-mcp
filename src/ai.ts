@@ -18,6 +18,13 @@ const client = new OpenAI({
     }
 });
 
+// Debug log to confirm env vars loaded
+if (!OPENROUTER_API_KEY) {
+    console.error("⚠️  AI Env: OPENROUTER_API_KEY is missing!");
+} else {
+    console.error(`✅ AI Env: Loaded key ending in ...${OPENROUTER_API_KEY.slice(-4)}. Using embedding model: ${EMBEDDING_MODEL}`);
+}
+
 export async function generateEmbedding(text: string): Promise<number[] | null> {
     if (!OPENROUTER_API_KEY) {
         console.error("Skipping embedding: No API key provided.");
