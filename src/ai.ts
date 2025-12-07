@@ -20,7 +20,7 @@ const client = new OpenAI({
 
 export async function generateEmbedding(text: string): Promise<number[] | null> {
     if (!OPENROUTER_API_KEY) {
-        console.warn("Skipping embedding: No API key provided.");
+        console.error("Skipping embedding: No API key provided.");
         return null;
     }
 
@@ -38,7 +38,7 @@ export async function generateEmbedding(text: string): Promise<number[] | null> 
 
 export async function summarizeMemories(memories: string[]): Promise<string | null> {
     if (!OPENROUTER_API_KEY) {
-        console.warn("Skipping summary: No API key provided.");
+        console.error("Skipping summary: No API key provided.");
         return null;
     }
 
