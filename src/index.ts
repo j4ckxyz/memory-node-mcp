@@ -170,6 +170,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     },
                     required: ["id", "content", "confirm"]
                 }
+            },
+            {
+                name: "read_recent_memories",
+                description: "Retrieve the most recent memories (default 50) to understand current context. Use this when you need to see what happened recently without searching for specific keywords.",
+                inputSchema: {
+                    type: "object",
+                    properties: {},
+                    required: []
+                }
             }
         ],
     };
@@ -269,6 +278,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
                 {
                     type: "text",
                     text: "Maintenance task triggered successfully.",
+                },
+            ],
+        } as any;
+    }
+
+    if (name === "read_recent_memories") {
+        const memories = getMemories(50);
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: JSON.stringify(memories, null, 2),
                 },
             ],
         } as any;
