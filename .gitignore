@@ -1,0 +1,7 @@
+node_modules
+dist
+.env
+memories.db
+error.log
+error_final.log
+.DS_Store

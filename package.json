@@ -1,0 +1,29 @@
+{
+  "name": "memory-node-mcp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.24.3",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.10.1",
+    "@types/node-cron": "^3.0.11",
+    "better-sqlite3": "^12.5.0",
+    "compute-cosine-similarity": "^1.1.0",
+    "express": "^5.2.1",
+    "node-cron": "^4.2.1",
+    "openai": "^6.10.0",
+    "typescript": "^5.9.3",
+    "zod": "^4.1.13"
+  }
+}
