@@ -294,12 +294,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
     }
 
     if (name === "backfill_memories") {
-        const count = await backfillAllEmbeddings();
+        const status = await backfillAllEmbeddings();
         return {
             content: [
                 {
                     type: "text",
-                    text: `Backfill complete. processed ${count} memories.`,
+                    text: status,
                 },
             ],
         } as any;

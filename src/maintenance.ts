@@ -1,9 +1,15 @@
 import cron from 'node-cron';
 import { getMemoriesWithoutEmbeddings, addEmbedding, getMemories, addMemory, updateMemory } from './db.js';
-import { generateEmbedding, summarizeMemories } from './ai.js';
+import { generateEmbedding, summarizeMemories, checkAiConfig } from './ai.js';
 
-export async function backfillAllEmbeddings() {
+export async function backfillAllEmbeddings(): Promise<string> {
     console.error("Starting full backfill of embeddings...");
+
+    const config = checkAiConfig();
+    if (!config.ok) {
+        return `FAILED: ${config.error}`;
+    }
+
     let processed = 0;
     while (true) {
         const missing = getMemoriesWithoutEmbeddings(20);
@@ -23,11 +29,11 @@ export async function backfillAllEmbeddings() {
         // If we processed a batch but didn't successfully embed any, assume failure (e.g. no API key) and stop to avoid infinite loop.
         if (batchSuccess === 0) {
             console.error("Failed to generate embeddings for batch. Aborting backfill.");
-            break;
+            return `PARTIAL: Processed ${processed} memories, then failed to generate embeddings. Check logs.`;
         }
     }
     console.error(`Backfill complete. Processed ${processed} memories.`);
-    return processed;
+    return `SUCCESS: Processed ${processed} memories.`;
 }
 
 // Schedule: Daily at midnight

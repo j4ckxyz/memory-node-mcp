@@ -25,6 +25,13 @@ if (!OPENROUTER_API_KEY) {
     console.error(`✅ AI Env: Loaded key ending in ...${OPENROUTER_API_KEY.slice(-4)}. Using embedding model: ${EMBEDDING_MODEL}`);
 }
 
+export function checkAiConfig(): { ok: boolean, error?: string } {
+    if (!OPENROUTER_API_KEY) {
+        return { ok: false, error: "OPENROUTER_API_KEY is missing or empty." };
+    }
+    return { ok: true };
+}
+
 export async function generateEmbedding(text: string): Promise<number[] | null> {
     if (!OPENROUTER_API_KEY) {
         console.error("Skipping embedding: No API key provided.");

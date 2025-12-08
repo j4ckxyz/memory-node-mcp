@@ -24,10 +24,10 @@ async function run() {
     console.log("Memory found in DB.");
     console.log("Embedding status:", mem.embedding ? "Has embedding" : "No embedding (Check API Key)");
 
-    // Test backfill (shouldn't crash even if no key)
+    // Test backfill
     console.log("Running backfill...");
-    await backfillAllEmbeddings();
-    console.log("Backfill finished.");
+    const status = await backfillAllEmbeddings();
+    console.log("Backfill finished:", status);
 
     // Test delete
     console.log("Deleting memory...");
