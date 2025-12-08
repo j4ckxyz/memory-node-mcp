@@ -23,7 +23,7 @@ import {
     getAllMemories,
     searchMemoriesByVector
 } from "./db.js";
-import { initScheduler, runMaintenance } from "./maintenance.js";
+import { initScheduler, runMaintenance, backfillAllEmbeddings } from "./maintenance.js";
 import { generateEmbedding } from "./ai.js";
 
 // Initialize the database and scheduler
@@ -180,6 +180,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     properties: {},
                     required: []
                 }
+            },
+            {
+                name: "backfill_memories",
+                description: "Force generation of embeddings for all memories that miss them. Run this if you added memories manually or if the auto-embedding failed.",
+                inputSchema: {
+                    type: "object",
+                    properties: {},
+                    required: []
+                }
             }
         ],
     };
@@ -192,7 +201,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
 
     if (name === "remember") {
         const { content, type, metadata } = RememberSchema.parse(args);
-        const id = addMemory(content, type, metadata);
+        const id = await addMemory(content, type, metadata);
         return {
             content: [
                 {
@@ -279,6 +288,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
                 {
                     type: "text",
                     text: "Maintenance task triggered successfully.",
+                },
+            ],
+        } as any;
+    }
+
+    if (name === "backfill_memories") {
+        const count = await backfillAllEmbeddings();
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: `Backfill complete. processed ${count} memories.`,
                 },
             ],
         } as any;

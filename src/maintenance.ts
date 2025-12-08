@@ -2,6 +2,34 @@ import cron from 'node-cron';
 import { getMemoriesWithoutEmbeddings, addEmbedding, getMemories, addMemory, updateMemory } from './db.js';
 import { generateEmbedding, summarizeMemories } from './ai.js';
 
+export async function backfillAllEmbeddings() {
+    console.error("Starting full backfill of embeddings...");
+    let processed = 0;
+    while (true) {
+        const missing = getMemoriesWithoutEmbeddings(20);
+        if (missing.length === 0) break;
+
+        console.error(`Backfilling batch of ${missing.length} memories...`);
+        let batchSuccess = 0;
+        for (const mem of missing) {
+            const vector = await generateEmbedding(mem.content);
+            if (vector) {
+                addEmbedding(mem.id, vector);
+                processed++;
+                batchSuccess++;
+            }
+        }
+
+        // If we processed a batch but didn't successfully embed any, assume failure (e.g. no API key) and stop to avoid infinite loop.
+        if (batchSuccess === 0) {
+            console.error("Failed to generate embeddings for batch. Aborting backfill.");
+            break;
+        }
+    }
+    console.error(`Backfill complete. Processed ${processed} memories.`);
+    return processed;
+}
+
 // Schedule: Daily at midnight
 export function initScheduler() {
     console.error("Initializing scheduler (Daily at 00:00)...");
@@ -56,7 +84,7 @@ async function summarizeRecent() {
     const summary = await summarizeMemories(conversations.map(c => c.content));
 
     if (summary) {
-        addMemory(summary, 'periodic_summary', { source_count: conversations.length, date: new Date().toISOString() });
+        await addMemory(summary, 'periodic_summary', { source_count: conversations.length, date: new Date().toISOString() });
         console.error("Created new periodic summary.");
     }
 }

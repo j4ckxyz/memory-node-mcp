@@ -4,6 +4,7 @@ import { homedir } from 'os';
 import { mkdirSync, existsSync } from 'fs';
 import { randomUUID } from 'node:crypto';
 import similarity from 'compute-cosine-similarity';
+import { generateEmbedding } from './ai.js';
 export { similarity };
 
 export interface Memory {
@@ -44,13 +45,25 @@ export function initDb() {
   }
 }
 
-export function addMemory(content: string, type: string = 'conversation', metadata?: any): string {
+export async function addMemory(content: string, type: string = 'conversation', metadata?: any): Promise<string> {
   const id = randomUUID();
   const stmt = db.prepare(`
     INSERT INTO memories (id, content, type, metadata)
     VALUES (?, ?, ?, ?)
   `);
   stmt.run(id, content, type, metadata ? JSON.stringify(metadata) : null);
+
+  // Generate and save embedding immediately
+  try {
+    const vector = await generateEmbedding(content);
+    if (vector) {
+      addEmbedding(id, vector);
+    }
+  } catch (error) {
+    console.error("Failed to generate embedding for new memory:", error);
+    // Continue without embedding, it can be backfilled later
+  }
+
   return id;
 }
 
