@@ -178,7 +178,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 description: "Retrieve the most recent memories (default 50) to understand current context. Use this when you need to see what happened recently without searching for specific keywords.",
                 inputSchema: {
                     type: "object",
-                    properties: {},
+                    properties: {
+                        limit: { type: "number", description: "Optional limit (default: 20)" }
+                    },
                     required: []
                 }
             },
@@ -196,7 +198,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 description: "Retrieve a high-level summary of all memory topics. Use this FIRST to understand what I know, before searching for specifics.",
                 inputSchema: {
                     type: "object",
-                    properties: {},
+                    properties: {
+                        format: { type: "string", description: "Optional format preference (default: text)" }
+                    },
                     required: []
                 }
             },
@@ -205,7 +209,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 description: "Force the system to re-analyze all memories and generate a new topic summary.",
                 inputSchema: {
                     type: "object",
-                    properties: {},
+                    properties: {
+                        run_async: { type: "boolean", description: "Run in background (default: false)" }
+                    },
                     required: []
                 }
             }
