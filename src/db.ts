@@ -75,6 +75,7 @@ export function addEmbedding(id: string, embedding: number[]) {
 export function getMemories(limit: number = 100): Memory[] {
   const stmt = db.prepare(`
     SELECT * FROM memories
+    WHERE type != 'global_summary'
     ORDER BY created_at DESC
     LIMIT ?
   `);
@@ -83,7 +84,7 @@ export function getMemories(limit: number = 100): Memory[] {
 
 export function getMemoriesWithoutEmbeddings(limit: number = 20): Memory[] {
   const stmt = db.prepare(`
-        SELECT * FROM memories WHERE embedding IS NULL AND type != 'summary'
+        SELECT * FROM memories WHERE embedding IS NULL AND type != 'summary' AND type != 'global_summary'
         ORDER BY created_at DESC
         LIMIT ?
     `);
@@ -135,6 +136,22 @@ export function updateMemory(id: string, content: string): boolean {
 }
 
 export function getAllMemories(): Memory[] {
-  const stmt = db.prepare('SELECT * FROM memories ORDER BY created_at ASC');
+  const stmt = db.prepare("SELECT * FROM memories WHERE type != 'global_summary' ORDER BY created_at ASC");
   return stmt.all() as Memory[];
+}
+
+export function saveGlobalSummary(content: string) {
+  const id = 'global_summary';
+  const existing = db.prepare('SELECT id FROM memories WHERE id = ?').get(id);
+
+  if (existing) {
+    db.prepare('UPDATE memories SET content = ?, created_at = CURRENT_TIMESTAMP WHERE id = ?').run(content, id);
+  } else {
+    db.prepare("INSERT INTO memories (id, content, type) VALUES (?, ?, 'global_summary')").run(id, content);
+  }
+}
+
+export function getGlobalSummary(): string | null {
+  const row = db.prepare('SELECT content FROM memories WHERE id = ?').get('global_summary') as Memory | undefined;
+  return row ? row.content : null;
 }

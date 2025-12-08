@@ -21,9 +21,10 @@ import {
     deleteMemory,
     updateMemory,
     getAllMemories,
-    searchMemoriesByVector
+    searchMemoriesByVector,
+    getGlobalSummary
 } from "./db.js";
-import { initScheduler, runMaintenance, backfillAllEmbeddings } from "./maintenance.js";
+import { initScheduler, runMaintenance, backfillAllEmbeddings, updateGlobalSummary } from "./maintenance.js";
 import { generateEmbedding } from "./ai.js";
 
 // Initialize the database and scheduler
@@ -92,18 +93,18 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
 server.setRequestHandler(ReadResourceRequestSchema, async (request: any) => {
     const uri = request.params.uri;
     if (uri === "memory://all") {
-        const memories = getAllMemories();
+        const summary = getGlobalSummary();
         return {
             contents: [
                 {
                     uri,
                     mimeType: "application/json",
-                    text: JSON.stringify(memories, null, 2),
+                    text: summary ? JSON.stringify({ summary }, null, 2) : JSON.stringify({ error: "No global summary available yet." }, null, 2),
                 },
             ],
         };
     } else if (uri === "memory://recent") {
-        const memories = getMemories(100);
+        const memories = getMemories(20);
         return {
             contents: [
                 {
@@ -184,6 +185,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             {
                 name: "backfill_memories",
                 description: "Force generation of embeddings for all memories that miss them. Run this if you added memories manually or if the auto-embedding failed.",
+                inputSchema: {
+                    type: "object",
+                    properties: {},
+                    required: []
+                }
+            },
+            {
+                name: "read_memory_summary",
+                description: "Retrieve a high-level summary of all memory topics. Use this FIRST to understand what I know, before searching for specifics.",
+                inputSchema: {
+                    type: "object",
+                    properties: {},
+                    required: []
+                }
+            },
+            {
+                name: "create_topic_summary",
+                description: "Force the system to re-analyze all memories and generate a new topic summary.",
                 inputSchema: {
                     type: "object",
                     properties: {},
@@ -306,12 +325,36 @@ server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
     }
 
     if (name === "read_recent_memories") {
-        const memories = getMemories(50);
+        const memories = getMemories(20);
         return {
             content: [
                 {
                     type: "text",
                     text: JSON.stringify(memories, null, 2),
+                },
+            ],
+        } as any;
+    }
+
+    if (name === "read_memory_summary") {
+        const summary = getGlobalSummary();
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: summary || "No summary available yet. Try running create_topic_summary or wait for background task.",
+                },
+            ],
+        } as any;
+    }
+
+    if (name === "create_topic_summary") {
+        const status = await updateGlobalSummary();
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: status,
                 },
             ],
         } as any;

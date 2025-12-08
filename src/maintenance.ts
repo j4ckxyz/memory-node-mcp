@@ -1,6 +1,27 @@
 import cron from 'node-cron';
-import { getMemoriesWithoutEmbeddings, addEmbedding, getMemories, addMemory, updateMemory } from './db.js';
-import { generateEmbedding, summarizeMemories, checkAiConfig } from './ai.js';
+import { getMemoriesWithoutEmbeddings, addEmbedding, getMemories, addMemory, updateMemory, getAllMemories, saveGlobalSummary } from './db.js';
+import { generateEmbedding, summarizeMemories, checkAiConfig, generateTopicSummary } from './ai.js';
+
+export async function updateGlobalSummary(): Promise<string> {
+    console.error("Updating global topic summary...");
+    const config = checkAiConfig();
+    if (!config.ok) return `FAILED: ${config.error}`;
+
+    const allMemories = getAllMemories();
+    if (allMemories.length === 0) return "No memories to summarize.";
+
+    // Limit to recent 200 or so to avoid huge context, or just take all if consistent with limits.
+    // For now, let's take the last 500 lines of content combined, or just 100 most recent memories.
+    const recent = allMemories.slice(0, 100);
+    const summary = await generateTopicSummary(recent.map(m => m.content));
+
+    if (summary) {
+        saveGlobalSummary(summary);
+        console.error("Global summary updated.");
+        return "Global summary updated successfully.";
+    }
+    return "Failed to generate summary.";
+}
 
 export async function backfillAllEmbeddings(): Promise<string> {
     console.error("Starting full backfill of embeddings...");
@@ -38,10 +59,17 @@ export async function backfillAllEmbeddings(): Promise<string> {
 
 // Schedule: Daily at midnight
 export function initScheduler() {
-    console.error("Initializing scheduler (Daily at 00:00)...");
+    console.error("Initializing scheduler...");
+
+    // Daily maintenance at midnight
     cron.schedule('0 0 * * *', async () => {
         console.error("Running daily maintenance...");
         await runMaintenance();
+    });
+
+    // Update summary every 6 hours
+    cron.schedule('0 */6 * * *', async () => {
+        await updateGlobalSummary();
     });
 }
 

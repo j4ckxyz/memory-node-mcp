@@ -72,3 +72,30 @@ export async function summarizeMemories(memories: string[]): Promise<string | nu
         return null;
     }
 }
+
+export async function generateTopicSummary(memories: string[]): Promise<string | null> {
+    if (!OPENROUTER_API_KEY) return null;
+    if (memories.length === 0) return null;
+
+    try {
+        const completion = await client.chat.completions.create({
+            model: SUMMARY_MODEL,
+            messages: [
+                {
+                    role: "system", content: "You are a memory manager. Read the provided memories and create a high-level list of MAIN TOPICS found in them. \n" +
+                        "For each topic, provide a one-sentence summary. \n" +
+                        "Format as a list of bullet points. \n" +
+                        "Example:\n" +
+                        "- **Work**: Discussing project deadlines and team structure.\n" +
+                        "- **Hobby**: Mentioned liking tennis and hiking.\n" +
+                        "Do not include specific details, just the high-level topics."
+                },
+                { role: "user", content: memories.join("\n\n---\n\n") }
+            ],
+        });
+        return completion.choices[0].message.content;
+    } catch (error) {
+        console.error("Error generating topic summary:", error);
+        return null;
+    }
+}
